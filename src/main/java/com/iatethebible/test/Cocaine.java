@@ -24,60 +24,64 @@ import java.security.Key;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
 
 public class Cocaine implements Listener {
+    private static final Sound snort = Sound.BLOCK_POWDER_SNOW_BREAK;
+    private static final Sound snort2 = Sound.ENTITY_SNIFFER_SNIFFING;
+    private static final PotionEffect zoom = PotionEffectType.SPEED.createEffect(60 * 20, 2);
+    private static final PotionEffect power = PotionEffectType.DOLPHINS_GRACE.createEffect(60 * 20, 2);
+    private static final PotionEffect dig = PotionEffectType.FAST_DIGGING.createEffect(60 * 20, 2);
+    private static final PotionEffect hurt = PotionEffectType.WITHER.createEffect(120 * 20, 1);
+    private static final PotionEffect[] effects = new PotionEffect[]{zoom, power, dig};
+
     @EventHandler
-
     public void onPlayerInteractEvent(PlayerInteractEvent e) {
-
         Action act = e.getAction();
-
-        Sound snort = Sound.BLOCK_POWDER_SNOW_BREAK;
-        Sound snort2 = Sound.ENTITY_SNIFFER_SNIFFING;
-        PotionEffect zoom = PotionEffectType.SPEED.createEffect(60 * 20, 2);
-        PotionEffect power = PotionEffectType.DOLPHINS_GRACE.createEffect(60 * 20, 2);
-        PotionEffect dig = PotionEffectType.FAST_DIGGING.createEffect(60 * 20, 2);
-        PotionEffect hurt = PotionEffectType.WITHER.createEffect(120 * 20, 1);
-        PotionEffect[] effects = new PotionEffect[]{zoom, power, dig};
-
-
         Player p = e.getPlayer();
 
-        if (act == Action.RIGHT_CLICK_AIR && p.isSneaking()) {
-            ItemStack item = e.getItem();
+        //Check if the player right-clicked and is sneaking
+        if(act != Action.RIGHT_CLICK_AIR && act != Action.RIGHT_CLICK_BLOCK)
+            return;
+        if(!p.isSneaking())
+            return;
 
-            if (item != null) {
-                Material material = item.getType();
-                if (material == Material.SUGAR) {
-                    PersistentDataContainer pdc = item.getItemMeta().getPersistentDataContainer();
-                    if (!pdc.has(Main.itemKey, PersistentDataType.STRING))
-                        return;
+        ItemStack item = e.getItem();
 
-                    if (pdc.get(Main.itemKey, PersistentDataType.STRING).equals("cocaine")) {
-                        if(p.hasPotionEffect(PotionEffectType.WITHER))
-                            p.removePotionEffect(PotionEffectType.WITHER);
-                        item.setAmount(item.getAmount()-1);
-                        Location pLoc = p.getEyeLocation();
-                        Vector direction = new Vector(pLoc.getDirection().getX(), 0, pLoc.getDirection().getZ()).normalize();
-                        p.spawnParticle(Particle.SNOW_SHOVEL, pLoc.add(direction), 10,0 , 0, 0);
-                        p.playSound(p, snort, 10, 1);
-                        p.playSound(p, snort2, 9, 1);
-                        p.addPotionEffects(Arrays.asList(effects));
+        assert item != null;
+        if(!item.hasItemMeta())
+            return;
 
-                        new DelayTask(() ->{
-                            p.addPotionEffect(hurt);
-                        }, 60 * 20);
+        //if it doesn't have the key or the key is not cocaine, return
+        PersistentDataContainer pdc = Objects.requireNonNull(item.getItemMeta()).getPersistentDataContainer();
+        if (!pdc.has(Main.itemKey, PersistentDataType.STRING))
+            return;
+        if (!Objects.equals(pdc.get(Main.itemKey, PersistentDataType.STRING), "cocaine"))
+            return;
 
-
-
-
-
-                    }
-                }
-            }
-
-        }
+        //We successfully consumed cocaine
+        consumeCocaine(p, item);
     }
 
+    private void consumeCocaine(Player p, ItemStack item){
+        //Remove old wither effect
+        if(p.hasPotionEffect(PotionEffectType.WITHER))
+            p.removePotionEffect(PotionEffectType.WITHER);
+
+        //Use 1 item
+        item.setAmount(item.getAmount()-1);
+
+        //Play effects
+        Location pLoc = p.getEyeLocation();
+        Vector direction = new Vector(pLoc.getDirection().getX(), 0, pLoc.getDirection().getZ()).normalize();
+        p.spawnParticle(Particle.SNOW_SHOVEL, pLoc.add(direction), 10,0 , 0, 0);
+        p.playSound(p, snort, 10, 1);
+        p.playSound(p, snort2, 9, 1);
+        p.addPotionEffects(Arrays.asList(effects));
+
+        new DelayTask(() ->{
+            p.addPotionEffect(hurt);
+        }, 60 * 20);
+    }
 }
