@@ -1,0 +1,4 @@
+name: test
+version: '${project.version}'
+main: com.iatethebible.test.Main
+api-version: '1.20'
