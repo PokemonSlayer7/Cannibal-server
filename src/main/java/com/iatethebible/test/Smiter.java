@@ -28,31 +28,25 @@ import java.lang.reflect.Type;
 import java.security.Key;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import static org.bukkit.Bukkit.*;
 
-public class Smiter implements Listener
-{
+public class Smiter implements Listener {
 
     @EventHandler
-    public void onLightingStrike(LightningStrikeEvent event)
-    {
-
+    public void onLightingStrike(LightningStrikeEvent event) {
         Location location = event.getLightning().getLocation();
-        List<Entity> entities = (List<Entity>) event.getLightning().getWorld().getNearbyEntities(location, 1,1,1);
-        for (Entity entity: entities)
-        {
-            if(entity instanceof Item item)
-            {
-                if(item.getItemStack().getType() == Material.TRIDENT)
-                {
-
+        List<Entity> entities = (List<Entity>) event.getLightning().getWorld().getNearbyEntities(location, 1, 1, 1);
+        for (Entity entity : entities) {
+            if (entity instanceof Item item) {
+                if (item.getItemStack().getType() == Material.TRIDENT) {
                     entity.remove();
                     Block bar = event.getWorld().getBlockAt(location);
                     location.getBlock().setType(Material.WATER);
-                    new DelayTask(() ->{
+                    new DelayTask(() -> {
                         bar.setType(Material.BARREL);
-                        Barrel bar2 = (Barrel)bar.getState();
+                        Barrel bar2 = (Barrel) bar.getState();
 
                         ItemStack trident = new ItemStack(Material.TRIDENT);
                         ItemMeta tridentMeta = trident.getItemMeta();
@@ -60,32 +54,26 @@ public class Smiter implements Listener
                         ArrayList<String> tridentLore = new ArrayList<>();
                         tridentLore.add(ChatColor.MAGIC + "This specific trident has been graced by the LIGHTNING GODS");
                         tridentMeta.setLore(tridentLore);
-                        tridentMeta.getPersistentDataContainer().set(Main.itemKey,PersistentDataType.STRING,"Trident-Bolt");
+                        tridentMeta.getPersistentDataContainer().set(Main.itemKey, PersistentDataType.STRING, "trident-bolt");
                         trident.setItemMeta(tridentMeta);
 
                         bar2.getInventory().addItem(trident);
-                        Bukkit.getServer().getPlayer("IAteTheBible").sendMessage("new trident");
                     }, 17);
-
-
-
-
                 }
             }
         }
-
     }
-    @EventHandler
-    public void onProjectileLaunchEvent(ProjectileLaunchEvent projevent)
-    {
-        Projectile projectile = (Projectile) getItemFactory().getItemMeta(Material.TRIDENT);
-        PersistentDataContainer pdc = projectile.getPersistentDataContainer();
-        if (pdc.get(Main.itemKey,PersistentDataType.STRING).equals("Trident-Bolt"))
-        {
-            Location hit = projevent.getEntity().getLocation();
-            hit.getWorld().strikeLightning(hit);
-        }
 
+    @EventHandler
+    public void onProjectLand(ProjectileHitEvent event) {
+        Entity proj = event.getEntity();
+        if (proj instanceof Trident projectile) {
+            PersistentDataContainer pdc = projectile.getPersistentDataContainer();
+            if (!Objects.equals(pdc.get(Main.itemKey, PersistentDataType.STRING), "trident-bolt"))
+                return;
+
+            projectile.getWorld().strikeLightning(projectile.getLocation());
+        }
     }
 
 }
