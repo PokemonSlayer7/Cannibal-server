@@ -55,6 +55,7 @@ public class Smiter implements Listener {
                         tridentLore.add(ChatColor.MAGIC + "This specific trident has been graced by the LIGHTNING GODS");
                         tridentMeta.setLore(tridentLore);
                         tridentMeta.getPersistentDataContainer().set(Main.itemKey, PersistentDataType.STRING, "trident-bolt");
+
                         trident.setItemMeta(tridentMeta);
 
                         bar2.getInventory().addItem(trident);
@@ -68,7 +69,7 @@ public class Smiter implements Listener {
     public void onProjectLand(ProjectileHitEvent event) {
         Entity proj = event.getEntity();
         if (proj instanceof Trident projectile) {
-            PersistentDataContainer pdc = projectile.getPersistentDataContainer();
+            PersistentDataContainer pdc = projectile.getItem().getItemMeta().getPersistentDataContainer();
             if (!Objects.equals(pdc.get(Main.itemKey, PersistentDataType.STRING), "trident-bolt"))
                 return;
 
